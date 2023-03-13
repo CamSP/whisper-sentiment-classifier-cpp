@@ -7,5 +7,4 @@ Grupo 7 conformado por:
 - Rubén Libardo Umaña
 - Juan Felipe Saavedra
 - Sergio Andres Cañón 
-- Jhair Steven Gallego
 - Camilo Andres Valencia
