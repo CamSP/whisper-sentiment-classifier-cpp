@@ -4,6 +4,7 @@ rm libtorch-shared-with-deps-latest.zip
 
 pip install pandas
 pip install scikit-learn
+pip install matplotlib
 
 mkdir data
 cd tools
