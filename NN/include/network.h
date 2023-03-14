@@ -21,7 +21,7 @@ struct NetImpl : torch::nn::Module{
   torch::Tensor forward(torch::Tensor x){
     x = torch::relu(fc1(x));
     x = torch::relu(fc2(x));
-    x = out(x);
+    x = torch::nn::functional::softmax(out(x), torch::nn::functional::SoftmaxFuncOptions(1));
     return x;
   }
 
