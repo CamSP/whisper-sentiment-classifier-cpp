@@ -41,6 +41,8 @@ First, download one of the Whisper models converted in [ggml format](models). In
 ```bash
 bash ./models/download-ggml-model.sh medium
 ```
+**Note:** Now it is not necesary to download the model in advance, the Medium model gets downloaded automatically if non-existant through the Makefile during the first execution.
+
 
 Now build the [main](examples/main) example which is the most typical use case for prerecorded audio transcprition. This is done using the Makefile inside the whisper.cpp main directory:
 
@@ -76,13 +78,13 @@ This will download audio files from Wikipedia and convert them to 16-bit WAV for
 ## Memory usage
 
 This table summarizes the Disk and RAM usage of all models
-| Model  | Disk   | Mem     | SHA                                        |
-| ---    | ---    | ---     | ---                                        |
-| tiny   |  75 MB | ~125 MB | `bd577a113a864445d4c299885e0cb97d4ba92b5f` |
-| base   | 142 MB | ~210 MB | `465707469ff3a37a2b9b8d8f89f2f99de7299dac` |
-| small  | 466 MB | ~600 MB | `55356645c2b361a969dfd0ef2c5a50d530afd8d5` |
-| medium | 1.5 GB | ~1.7 GB | `fd9727b6e1217c2f614f9b698455c4ffd82463b4` |
-| large  | 2.9 GB | ~3.3 GB | `0f4c8e34f21cf1a914c59d8b3ce882345ad349d6` |
+| Model  | Disk   | Mem     |
+| ---    | ---    | ---     |
+| tiny   |  75 MB | ~125 MB |
+| base   | 142 MB | ~210 MB |
+| small  | 466 MB | ~600 MB |
+| medium | 1.5 GB | ~1.7 GB |
+| large  | 2.9 GB | ~3.3 GB |
 
 ## Limitations
 
