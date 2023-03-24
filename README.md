@@ -4,7 +4,5 @@ Proyecto desarrollado para el curso de Introducción a la Computación Científi
 Grupo 7 conformado por:
 - Camilo Esteban Zambrano
 - Mario Oswaldo Peña
-- Rubén Libardo Umaña
 - Juan Felipe Saavedra
-- Sergio Andres Cañón 
 - Camilo Andres Valencia
