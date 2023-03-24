@@ -1,3 +1,5 @@
+# Makefile start
+# Defining system parmateres such as OS and architecture in order to set the correct compilation flags
 ifndef UNAME_S
 UNAME_S := $(shell uname -s)
 endif
@@ -14,7 +16,6 @@ CCV := $(shell $(CC) --version | head -n 1)
 CXXV := $(shell $(CXX) --version | head -n 1)
 
 # Mac OS + Arm can report x86_64
-# ref: https://github.com/ggerganov/whisper.cpp/issues/66#issuecomment-1282546789
 ifeq ($(UNAME_S),Darwin)
 	ifneq ($(UNAME_P),arm)
 		SYSCTL_M := $(shell sysctl -n hw.optional.arm64)
@@ -28,20 +29,19 @@ endif
 
 #
 # Compile flags
-#
+# C : Binary compiler for ggml files
+# CXX: g++ compiler for Cpp files
 
 CFLAGS   = -I.              -O3 -DNDEBUG -std=c11   -fPIC
 CXXFLAGS = -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -fsanitize=address -fsanitize=leak -fsanitize=undefined
 LDFLAGS  =
 
-# ref: https://github.com/ggerganov/whisper.cpp/issues/37
 ifneq ($(wildcard /usr/include/musl/*),)
 	CFLAGS   += -D_POSIX_SOURCE -D_GNU_SOURCE
 	CXXFLAGS += -D_POSIX_SOURCE -D_GNU_SOURCE
 endif
 
 # OS specific
-# TODO: support Windows
 ifeq ($(UNAME_S),Linux)
 	CFLAGS   += -pthread
 	CXXFLAGS += -pthread
@@ -60,8 +60,6 @@ ifeq ($(UNAME_S),Haiku)
 endif
 
 # Architecture specific
-# TODO: probably these flags need to be tweaked on some architectures
-#       feel free to update the Makefile for your architecture and send a pull request or issue
 ifeq ($(UNAME_M),$(filter $(UNAME_M),x86_64 i686))
 	ifeq ($(UNAME_S),Darwin)
 		CFLAGS += -mf16c
@@ -150,18 +148,6 @@ ifneq ($(filter aarch64%,$(UNAME_M)),)
 	CFLAGS += -mcpu=native
 	CXXFLAGS += -mcpu=native
 endif
-ifneq ($(filter armv6%,$(UNAME_M)),)
-	# Raspberry Pi 1, 2, 3
-	CFLAGS += -mfpu=neon-fp-armv8 -mfp16-format=ieee -mno-unaligned-access
-endif
-ifneq ($(filter armv7%,$(UNAME_M)),)
-	# Raspberry Pi 4
-	CFLAGS += -mfpu=neon-fp-armv8 -mfp16-format=ieee -mno-unaligned-access -funsafe-math-optimizations
-endif
-ifneq ($(filter armv8%,$(UNAME_M)),)
-	# Raspberry Pi 4
-	CFLAGS += -mfp16-format=ieee -mno-unaligned-access
-endif
 
 #
 # Print build information
@@ -178,6 +164,7 @@ $(info I CC:       $(CCV))
 $(info I CXX:      $(CXXV))
 $(info )
 
+#When running "make" this is the default section run, can be main, stream or talk in our case.
 default: main
 
 #
@@ -222,7 +209,7 @@ talk: examples/talk/talk.cpp examples/talk/gpt-2.cpp $(SRC_COMMON) $(SRC_COMMON_
 # Audio samples
 #
 
-# download a few audio samples into folder "./samples":
+# download a few audio samples into folder "./samples", to run use "make samples"
 .PHONY: samples
 samples:
 	@echo "Downloading samples..."
@@ -241,46 +228,3 @@ samples:
 	@rm samples/gb0.ogg
 	@rm samples/gb1.ogg
 	@rm samples/hp0.ogg
-
-
-#
-# Models
-#
-
-# if not already downloaded, the following targets download the specified model and
-# runs it on all samples in the folder "./samples":
-
-.PHONY: tiny.en
-.PHONY: tiny
-.PHONY: base.en
-.PHONY: base
-.PHONY: small.en
-.PHONY: small
-.PHONY: medium.en
-.PHONY: medium
-.PHONY: large-v1
-.PHONY: large
-
-tiny.en tiny base.en base small.en small medium.en medium large-v1 large: main
-	bash ./models/download-ggml-model.sh $@
-	@echo ""
-	@echo "==============================================="
-	@echo "Running $@ on all samples in ./samples ..."
-	@echo "==============================================="
-	@echo ""
-	@for f in samples/*.wav; do \
-		echo "----------------------------------------------" ; \
-		echo "[+] Running $@ on $$f ... (run 'ffplay $$f' to listen)" ; \
-	    echo "----------------------------------------------" ; \
-		echo "" ; \
-		./main -m models/ggml-$@.bin -f $$f ; \
-		echo "" ; \
-	done
-
-#
-# Tests
-#
-
-.PHONY: tests
-tests:
-	bash ./tests/run-tests.sh
