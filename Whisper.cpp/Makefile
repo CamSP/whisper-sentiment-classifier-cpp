@@ -1,4 +1,5 @@
 # Makefile start
+
 # Defining system parmateres such as OS and architecture in order to set the correct compilation flags
 ifndef UNAME_S
 UNAME_S := $(shell uname -s)
@@ -177,6 +178,7 @@ ggml.o: ggml.c ggml.h
 whisper.o: whisper.cpp whisper.h
 	$(CXX) $(CXXFLAGS) -c whisper.cpp -o whisper.o
 
+
 libwhisper.a: ggml.o whisper.o
 	$(AR) rcs libwhisper.a ggml.o whisper.o
 
@@ -196,6 +198,11 @@ SRC_COMMON = examples/common.cpp
 SRC_COMMON_SDL = examples/common-sdl.cpp
 
 main: examples/main/main.cpp $(SRC_COMMON) ggml.o whisper.o
+	if ! [ -e models/ggml-medium.bin ]; then \
+	cd models; \
+	bash ./download-ggml-model.sh medium; \
+	cd ..;\
+	fi
 	$(CXX) $(CXXFLAGS) examples/main/main.cpp $(SRC_COMMON) ggml.o whisper.o -o main $(LDFLAGS)
 	./main -h
 
