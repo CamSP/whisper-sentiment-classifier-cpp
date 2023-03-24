@@ -1,6 +1,6 @@
 # Whisper.cpp
 
-## Modified whisper.cpp implementation (original de https://github.com/ggerganov/whisper.cpp) by group 7 for HPC 2023-1
+## Modified whisper.cpp implementation (original from https://github.com/ggerganov/whisper.cpp) by group 7 for HPC 2023-1
 
 High-performance inference of [OpenAI's Whisper](https://github.com/openai/whisper) automatic speech recognition (ASR) model:
 
@@ -194,6 +194,6 @@ Some of the examples are even ported to run in the browser using WebAssembly. Ch
 
 | Example | Description |
 | ---     | ---         |
-| [main](examples/main) | Tool for translating and transcribing audio using Whisper |
+| [main](examples/main) | Translating and transcribing audio using Whisper Cpp model |
 | [stream](examples/stream) | Real-time transcription of raw microphone capture |
 | [talk](examples/talk) | Talk with a GPT-2 bot |
