@@ -36,35 +36,45 @@ class TData : public torch::data::datasets::Dataset<TData> {
         return read_dataset_csv("../data/test.csv");
     }
 
-    std::vector<std::vector<int>> preprocessDataset(bool train=true){
 
+    // Preprocesamiento del dataset
+    std::vector<std::vector<int>> preprocessDataset(bool train=true){
+        // Matriz de salida
         std::vector<std::vector<int>>output_matrix;
+        // Tokenizador
         Tokenizer tokenizer;
+        // Inicialización de la matriz
         output_matrix.reserve(content_dataset.size());
         int i = 0;
+        // Para cada columna del dataset
         for(const auto& row:content_dataset){    
+            // Si es el set de entrenamiento, se entrena el corpus y se tokeniza
+            // Si es el set de prueba, solo se tokeniza
             std::vector<int> tokenized = train?tokenizer.fit_tokenize(row[0], vocab_size):tokenizer.tokenize(row[0], vocab_size);
+            // Se añade la categoria al final del dataset
             tokenized.push_back(std::stoi(row[1]));
+            // Se añade el vector al dataset de salida
             output_matrix.push_back(tokenized);
             i++;
-
+            // Se imprime en consola cada 10000 datos tokenizados
             if(i%10000==0)
                 std::cout<<i<<std::endl;
         }
-
+        // Se guarda el nuevo corpus
         tokenizer.saveFit();
         return output_matrix;
     }
 
     // Separación entre datos y objetivos a predecir  
-    // stof pasa los datos de string a float
     Example get(size_t index){
         // Datos
         vector<int> tokens;
+        // Cada elemento del vector tokenizado se añade al tensor de salida
         for(int i = 0; i<vocab_size;i++){
             tokens.push_back(processed_dataset[index][i]);
         }
         // Targets
+        // Se añaden los objetivos al tensor de salida
         int sentiment = processed_dataset[index][vocab_size];
         // Convierte los datos en tensores
         return {torch::tensor(tokens), torch::tensor({sentiment})};
