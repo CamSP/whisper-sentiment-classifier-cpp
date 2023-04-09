@@ -1,3 +1,4 @@
+clear
 cd libtorch
 path=$(pwd)
 cd ..

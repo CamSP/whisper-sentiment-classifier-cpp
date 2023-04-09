@@ -16,14 +16,15 @@ plt.plot(Loss_test, label="Test")
 plt.xlabel("Epoch")
 plt.legend()
 plt.title("Loss")
-
+plt.grid()
 plt.savefig("../graphs/Loss.pdf")
 
 plt.figure()
 plt.plot(Acc_train, label="Train")
 plt.plot(Acc_test, label="Test")
+plt.ylim([0, 1])
 plt.xlabel("Epoch")
 plt.legend()
+plt.grid()
 plt.title("Acc")
-
 plt.savefig("../graphs/Acc.pdf")
