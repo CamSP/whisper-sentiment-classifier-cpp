@@ -14,7 +14,7 @@ map<string, int> frecuencia;
 int main() {
     string s;
 
-    ifstream file("jtk.txt"); // Cambiar por el nombre del archivo que saca Whisper
+    ifstream file("Whisper.cpp/samples/mrbeast.wav.txt"); // Ruta modificada
     getline(file, s);
 
     regex re("\\W+");

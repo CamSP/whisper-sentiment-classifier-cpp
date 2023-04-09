@@ -48,7 +48,7 @@ Now build the [main](examples/main) example which is the most typical use case f
 
 ```bash
 # build the main example
-make
+make -f makeWhisper.mk
 ```
 This might take a bit, but once it is finished you can simply run the [main](examples/main) exectubale alongside the needed or desired options in order to obtain transcribe the audio
 ```bash
@@ -74,6 +74,10 @@ make samples
 ```
 
 This will download audio files from Wikipedia and convert them to 16-bit WAV format via `ffmpeg`, which is needed as the model is made to receive files with those specifications.
+
+```bash
+ffmpeg -loglevel -0 -y -i samples/{name} -ar 16000 -ac 1 -c:a pcm_s16le samples/{name.wav}
+```
 
 ## Memory usage
 
