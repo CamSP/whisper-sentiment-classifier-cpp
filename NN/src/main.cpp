@@ -1,17 +1,27 @@
 #include "network.h"
 #include "dataset.h"
-
 #include <iostream>
 #include <torch/torch.h>
+
+#include <typeinfo>
 
 using namespace torch;
 
 // Parametros generales
 struct Options {
-    int train_batch_size = 15;
-    int test_batch_size = 45;
-    int epochs = 20;
-    float learning_rate = 0.01;
+    int input_dims = 20;
+    int output_dims = 1;
+    int vocab_size = 400000;
+    int embedding_dim = 400;
+
+    int hidden_size = 64;
+    int layers = 2;
+    int train_batch_size = 625;
+    int test_batch_size = 512;
+    // int train_batch_size = 625;
+    // int test_batch_size = 512;
+    int epochs = 1000;
+    float learning_rate = 0.001;
     torch::DeviceType device = torch::kCPU;
 };
 
@@ -20,7 +30,7 @@ static Options options;
 
 // Función de entrenamiento
 template <typename DataLoader>
-//Recibe:
+// Recibe:
 // network = Red neuronal
 // loader = Datos de entrada
 // optimizer = Optimizador 
@@ -40,43 +50,42 @@ std::vector<float> train(
 
     //Se inicializa la perdida y la presición en 0
     float Loss = 0, Acc = 0;
-
+    torch::nn::BCELoss bce_loss;
     // Se hace un loop en los datos donde se entrena con cada batch
     for (auto& batch : loader){
         // Se toman los datos
         auto data = batch.data.to(options.device);
         // Se toman los objetivos y se convierten en un tensor del tamaño del batch 
-        auto targets = batch.target.to(options.device).view({options.train_batch_size, 3});
+        auto targets = batch.target.to(options.device).view({options.train_batch_size, 1}).to(torch::kFloat);
         // Se evaluan los datos en la red neuronal
         auto output = network->forward(data);
         // Se evalua la perdida entre los datos predichos y los reales
         // (Cross Entropy es la función de perdida utilizada normalmente para salidas multiclase)
-        auto loss = torch::cross_entropy_loss(output, targets);
+        auto loss = bce_loss(output, targets);
         // Se revisa que no hayan errores en el calculo de la perdida
         assert(!std::isnan(loss.template item<float>()));
         // Se evalua la predicción vs los datos reales
-        // Dado que Adam retorna un arreglo de probabilidades, se toma el index del valor mas alto del arreglo
-        // Se compara con el index más alto de los datos reales (One hot encoding)
-        auto acc = output.argmax(1).eq(targets.argmax(1)).sum();
-
+        // Dado que Softmax retorna un arreglo de probabilidades, se toma el index del valor mas alto del arreglo
+        // Se compara con el index más alto de los datos reales (One hot encoding)     
+        
+        auto acc = torch::round(output).eq(targets).sum();
+        //std::cout << output<<std::endl;
         // Se restaura el gradiente a cero
         optimizer.zero_grad();
         // Se evalua el gradiente para este batch
         loss.backward();
         // Se actualizan los parametros de la red neuronal
         optimizer.step();
-
         // Se añaden los datos de loss y acc a los valores historicos
         Loss += loss.template item<float>();
         Acc += acc.template item<float>();
-
         
     }
     // Despues de pasar por todos los datos, se imprimen los resultados de la epoca
-    std::cout << "Train Epoch: " << epoch << "\tLoss: " << Loss/data_size << "\tAcc: " << Acc/data_size<< std::endl;
+    std::cout << "Train Loss: " << Loss/data_size << "\tAcc: " << Acc/data_size<< std::endl;
     std::vector<float> resume(2);
-    resume[0] = Loss/105;
-    resume[1] = Acc/105;
+    resume[0] = Loss/data_size;
+    resume[1] = Acc/data_size;
     return resume;
 }
 
@@ -97,28 +106,28 @@ std::vector<float> test(Net& network, DataLoader& loader, size_t data_size) {
 
     // Inicialización de la perdida y la presición
     float Loss = 0, Acc = 0;
-
+    torch::nn::BCELoss bce_loss;
     // Se hace un loop en los datos donde se entrena con cada batch
     for (const auto& batch : loader){
         // Se toman los datos
         auto data = batch.data.to(options.device);
         // Se toman los objetivos y se convierten en un tensor del tamaño del batch 
-        auto targets = batch.target.to(options.device).view({options.test_batch_size, 3});
+        auto targets = batch.target.to(options.device).view({options.test_batch_size, 1}).to(torch::kFloat);
         // Se evaluan los datos en la red neuronal
         auto output = network->forward(data);
-        // Se calcula la perdida
-        auto loss = torch::cross_entropy_loss(output, targets);
+        // Se calcula la cout
+        auto loss = bce_loss(output, targets);
         // Se revisa que no hayan errores en el calculo de la perdida
         assert(!std::isnan(loss.template item<float>()));
         // Se calcula la presición
-        auto acc = output.argmax(1).eq(targets.argmax(1)).sum();
+        auto acc = torch::round(output).eq(targets).sum();
 
         // Se añaden los datos de loss y acc a los valores historicos
         Loss += loss.template item<float>();
         Acc += acc.template item<float>();
     }
     // Despues de pasar por todos los datos, se imprimen los resultados de la prueba
-    std::cout << "Test Loss: " << Loss/options.test_batch_size<< "\tAcc: " << Acc/options.test_batch_size << std::endl;
+    std::cout << "Test  Loss: " << Loss/options.test_batch_size<< "\tAcc: " << Acc/options.test_batch_size << std::endl;
     std::vector<float> resume(2);
     resume[0] = Loss/data_size;
     resume[1] = Acc/data_size;
@@ -144,7 +153,8 @@ void save_results(std::string path, std::vector<std::vector<float>> values){
 int main(){
     // Carga del dataset de entrenamiento
     // La función map toma todos los tensores y los transforma en un unico tensor
-    auto train_set = TData().map(torch::data::transforms::Stack<>());
+    auto train_set = TData(options.input_dims).map(torch::data::transforms::Stack<>());
+    
     // Se extrae el tamaño del dataset
     auto train_size = train_set.size().value();
     // Se crea el data loader del dataset
@@ -152,11 +162,11 @@ int main(){
     auto train_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
         std::move(train_set), options.train_batch_size);
 
-
     // Carga del dataset de prueba
 
     // La función map toma todos los tensores y los transforma en un unico tensor
-    auto test_set = TData(true).map(torch::data::transforms::Stack<>());
+    auto test_set = TData(options.input_dims, true).map(torch::data::transforms::Stack<>());
+    
     // Se extrae el tamaño del dataset
     auto test_size = test_set.size().value();
     // Se crea el data loader del dataset
@@ -166,7 +176,7 @@ int main(){
 
     // Creación de la red neuronal
     // 4 datos de entrada, 3 neuronas de salida
-    Net network(4, 3);
+    Net network(options.output_dims, options.vocab_size, options.embedding_dim, options.hidden_size, options.layers);
     // Se carga la red neuronal a la CPU
     network -> to(options.device);
 
@@ -182,14 +192,16 @@ int main(){
     // Loop de entrenamiento por la cantidad de epocas seleccionadas
     for(size_t i = 0; i<options.epochs; ++i){
         // Para cada epoca se entrena y se evalua
+        std::cout<<"Epoc: "<<i+1<<std::endl;
         resume_train.push_back(train(network, *train_loader, optimizer, i+1, train_size));
         resume_test.push_back(test(network, *test_loader, test_size));
         std::cout << std::endl;
     }
 
     // Se guarda el historico
+    torch::save(network, "../models/model.pt");
     save_results("../results/train_results.csv", resume_train);
     save_results("../results/test_results.csv", resume_test);
 
     return 0;
-}
+};

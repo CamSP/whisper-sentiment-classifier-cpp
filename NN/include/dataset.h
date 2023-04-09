@@ -1,56 +1,78 @@
 #include <iostream>
 #include <torch/torch.h>
+#include "tokenizer.h"
 
 class TData : public torch::data::datasets::Dataset<TData> {
     // Carga del dataset
 
     using Example = torch::data::Example<>;
     std::vector<std::vector<std::string>> content_dataset;
+    std::vector<std::vector<int>> processed_dataset;
 
     public:
     // Constructor de la clase
-
+    size_t vocab_size;
     // El parametro que recive define si se cargan los datos de
     // entrenamiento o de prueba
-    TData(bool isTestingData = false) {
+    TData(size_t vocab_size, bool isTestingData = false) {
+        TData::vocab_size = vocab_size;
         if(isTestingData){
             content_dataset = testing_set();
+            processed_dataset = preprocessDataset();
         }else{
             content_dataset = training_set();
+            processed_dataset = preprocessDataset(false);
         }
+        
     };
 
     // Carga del conjunto de datos de entrenamiento (Matriz)
     std::vector<std::vector<std::string>> training_set(){
-        return read_dataset_csv("../data/iris_train.csv");
+        return read_dataset_csv("../data/train.csv");
     }
 
     // Carga del conjunto de datos de prueba (Matriz)
     std::vector<std::vector<std::string>> testing_set(){
-        return read_dataset_csv("../data/iris_test.csv");
+        return read_dataset_csv("../data/test.csv");
+    }
+
+    std::vector<std::vector<int>> preprocessDataset(bool train=true){
+
+        std::vector<std::vector<int>>output_matrix;
+        Tokenizer tokenizer;
+        output_matrix.reserve(content_dataset.size());
+        int i = 0;
+        for(const auto& row:content_dataset){    
+            std::vector<int> tokenized = train?tokenizer.fit_tokenize(row[0], vocab_size):tokenizer.tokenize(row[0], vocab_size);
+            tokenized.push_back(std::stoi(row[1]));
+            output_matrix.push_back(tokenized);
+            i++;
+
+            if(i%10000==0)
+                std::cout<<i<<std::endl;
+        }
+
+        tokenizer.saveFit();
+        return output_matrix;
     }
 
     // Separación entre datos y objetivos a predecir  
     // stof pasa los datos de string a float
     Example get(size_t index){
         // Datos
-        float sepal_length = stof(content_dataset[index][0]);
-        float sepal_width = stof(content_dataset[index][1]);
-        float petal_length = stof(content_dataset[index][2]);
-        float petal_width = stof(content_dataset[index][3]);
-
+        vector<int> tokens;
+        for(int i = 0; i<vocab_size;i++){
+            tokens.push_back(processed_dataset[index][i]);
+        }
         // Targets
-        float specie1 = stof(content_dataset[index][4]);
-        float specie2 = stof(content_dataset[index][5]);
-        float specie3 = stof(content_dataset[index][6]);
-
+        int sentiment = processed_dataset[index][vocab_size];
         // Convierte los datos en tensores
-        return {torch::tensor({sepal_length, sepal_width, petal_length, petal_width}), torch::tensor({specie1, specie2, specie3})};
+        return {torch::tensor(tokens), torch::tensor({sentiment})};
     }
 
     // Retorna el tamaño del dataset
     torch::optional<size_t> size() const {
-        return content_dataset.size();
+        return processed_dataset.size();
     }
 
     // Lectura del csv
@@ -69,7 +91,7 @@ class TData : public torch::data::datasets::Dataset<TData> {
             
             std::stringstream str(line);
             
-            while(getline(str, word, ','))
+            while(getline(str, word, '\t'))
                 row.push_back(word);
                 content.push_back(row);
             }
