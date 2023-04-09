@@ -11,6 +11,7 @@ using namespace std;
 vector<string> palabras;
 
 int main() {
+    // Limpieza de apostrofes en las stopwords
     string s;
     ifstream file("../data/stopwords.txt");
     regex re("'");

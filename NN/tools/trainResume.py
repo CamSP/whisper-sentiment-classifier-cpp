@@ -2,15 +2,17 @@ import matplotlib.pylab as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 
+# Carga de los resutlados de entrenamiento
 datos_train=np.loadtxt("../results/train_results.csv", delimiter=",", dtype=float)
 Loss_train = datos_train[:,0]
 Acc_train = datos_train[:,1]
 
-
+# Carga de los resutlados de prueba
 datos_test=np.loadtxt("../results/test_results.csv", delimiter=",", dtype=float)
 Loss_test = datos_test[:,0]
 Acc_test = datos_test[:,1]
 
+# Plot de los datos de entrenamiento
 plt.plot(Loss_train, label="Train")
 plt.plot(Loss_test, label="Test")
 plt.xlabel("Epoch")
@@ -19,6 +21,7 @@ plt.title("Loss")
 plt.grid()
 plt.savefig("../graphs/Loss.pdf")
 
+# Plot de los datos de prueba
 plt.figure()
 plt.plot(Acc_train, label="Train")
 plt.plot(Acc_test, label="Test")
