@@ -25,15 +25,18 @@ do:
 	cd NN; \
 	chmod +x install.sh; \
 	./install.sh; \
-	chmod +x predict.sh; \
-	./predict.sh; \
 	cd ..; \
-	else \
+	fi
+	@if ! [ -e NN/models/model.pt ]; then \
+	cd NN; \
+	chmod +x run.sh; \
+	./run.sh; \
+	cd ..; \
+	fi
 	cd NN; \
 	chmod +x predict.sh; \
 	./predict.sh; \
-	cd ..; \
-	fi
+	cd ..;
 	@printf "\n \n \nCompletado! En la carpeta /results encontrarás los resultados!\n"
 
 
