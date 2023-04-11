@@ -1,5 +1,7 @@
 NN/libtorch
-NN/data
+NN/tools/stopwords.cpp
+NN/data/tweets_processed.csv
+NN/data/tweets.csv
 NN/build
 NN/graphs
 NN/results

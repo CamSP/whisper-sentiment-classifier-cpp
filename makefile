@@ -21,11 +21,20 @@ do:
 	@cp Whisper.cpp/samples/Input/Entrada.wav.txt NN/whisperOutput/output.txt
 	@rm Whisper.cpp/samples/Input/Entrada.wav.txt
 #Ejecuta la NN para la clasificación de sentimientos
-	@cd NN; \
+	@if ! [ -d NN/libtorch ]; then \
+	cd NN; \
 	chmod +x install.sh; \
 	./install.sh; \
 	chmod +x predict.sh; \
-	./predict.sh
+	./predict.sh; \
+	cd ..; \
+	else \
+	cd NN; \
+	chmod +x predict.sh; \
+	./predict.sh; \
+	cd ..; \
+	fi
+	@printf "\n \n \nCompletado! En la carpeta /results encontrarás los resultados!\n"
 
 
 	

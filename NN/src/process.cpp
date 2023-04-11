@@ -26,7 +26,7 @@ int main(){
     torch::load(network, "../models/model.pt");
 
     std::string line;
-    ifstream file("../whisperOuput/output.txt");
+    ifstream file("../whisperOutput/output.txt");
     while(getline(file, line)){
         vector<int>  texto_tokenizado = tokenizer.tokenize(line, 20);
         auto input_text = torch::from_blob(texto_tokenizado.data(), {1, 20}, torch::kInt32);
