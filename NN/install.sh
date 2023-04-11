@@ -6,12 +6,6 @@ pip install pandas
 pip install scikit-learn
 pip install matplotlib
 
-mkdir data
-cd tools
-python3 makeData.py
-cd .. 
-
-#bash run.sh
 
 
 
