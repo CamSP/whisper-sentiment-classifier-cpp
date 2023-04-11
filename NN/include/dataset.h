@@ -56,9 +56,6 @@ class TData : public torch::data::datasets::Dataset<TData> {
             // Se añade el vector al dataset de salida
             output_matrix.push_back(tokenized);
             i++;
-            // Se imprime en consola cada 10000 datos tokenizados
-            if(i%10000==0)
-                std::cout<<i<<std::endl;
         }
         // Se guarda el nuevo corpus
         tokenizer.saveFit();

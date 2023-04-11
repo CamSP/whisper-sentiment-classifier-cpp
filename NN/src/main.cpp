@@ -2,7 +2,7 @@
 #include "dataset.h"
 #include <iostream>
 #include <torch/torch.h>
-
+#include <chrono>
 #include <typeinfo>
 
 using namespace torch;
@@ -18,7 +18,7 @@ struct Options {
 
     int train_batch_size = 64;
     int test_batch_size = 32;
-    int epochs = 10;
+    int epochs = 50;
     float learning_rate = 0.001;
     torch::DeviceType device = torch::kCPU;
 };
@@ -146,10 +146,12 @@ void save_results(std::string path, std::vector<std::vector<float>> values){
 }
 
 int main(){
+    // Cronometro
+    auto start_time = std::chrono::high_resolution_clock::now();
     // Carga del dataset de entrenamiento
     // La función map toma todos los tensores y los transforma en un unico tensor
     auto train_set = TData(options.input_dims).map(torch::data::transforms::Stack<>());
-    
+
     // Se extrae el tamaño del dataset
     auto train_size = train_set.size().value();
     // Se crea el data loader del dataset
@@ -157,6 +159,9 @@ int main(){
     auto train_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
         std::move(train_set), options.train_batch_size);
 
+    auto train_set_time = std::chrono::high_resolution_clock::now();
+    auto train_set_duration = std::chrono::duration_cast<std::chrono::seconds>(train_set_time - start_time);
+    std::cout<<"Dataset de entrenamiento procesado en: "<<train_set_duration.count()<<" segundos"<<std::endl;
     // Carga del dataset de prueba
 
     // La función map toma todos los tensores y los transforma en un unico tensor
@@ -169,6 +174,10 @@ int main(){
     auto test_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
         std::move(test_set), options.test_batch_size);
 
+
+    auto test_set_time = std::chrono::high_resolution_clock::now();
+    auto test_set_duration = std::chrono::duration_cast<std::chrono::seconds>(test_set_time - train_set_time);
+    std::cout<<"Dataset de prueba procesado en: "<<test_set_duration.count()<<" segundos"<<std::endl;
     // Creación de la red neuronal
     // 4 datos de entrada, 3 neuronas de salida
     Net network(options.vocab_size, options.embedding_dim, options.hidden_size, options.layers);
@@ -186,10 +195,14 @@ int main(){
 
     // Loop de entrenamiento por la cantidad de epocas seleccionadas
     for(size_t i = 0; i<options.epochs; ++i){
+        auto epoch_time = std::chrono::high_resolution_clock::now();
         // Para cada epoca se entrena y se evalua
         std::cout<<"Epoch: "<<i+1<<std::endl;
         resume_train.push_back(train(network, *train_loader, optimizer, i+1, train_size));
         resume_test.push_back(test(network, *test_loader, test_size));
+        auto epoch_end_time = std::chrono::high_resolution_clock::now();
+        auto epoch_duration = std::chrono::duration_cast<std::chrono::seconds>(epoch_end_time - epoch_time);
+        std::cout<<"Duración: "<<epoch_duration.count()<<" segundos"<<std::endl;
         std::cout << std::endl;
         if((i+1)%5==0){
             // Se guarda el historico cada 5 epocas
@@ -203,6 +216,10 @@ int main(){
     torch::save(network, "../models/model.pt");
     save_results("../results/train_results.csv", resume_train);
     save_results("../results/test_results.csv", resume_test);
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
+    std::cout<<"El entrenamiento tardo: "<<duration.count()<<" segundos"<<std::endl;
 
     return 0;
 };
