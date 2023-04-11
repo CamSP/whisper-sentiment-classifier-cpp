@@ -11,7 +11,7 @@ cd tools
 python3 makeData.py
 cd .. 
 
-bash run.sh
+#bash run.sh
 
 
 
