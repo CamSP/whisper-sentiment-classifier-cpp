@@ -3,6 +3,9 @@ NN/tools/stopwords.cpp
 NN/data/tweets_processed.csv
 NN/data/tweets.csv
 NN/build
+NN/models
 NN/graphs
 NN/results
+NN/CMakeListsGPUtest.txt
+NN/src/testGPU.cpp
 *.out

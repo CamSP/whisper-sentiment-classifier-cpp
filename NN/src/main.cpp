@@ -20,7 +20,8 @@ struct Options {
     int test_batch_size = 32;
     int epochs = 50;
     float learning_rate = 0.001;
-    torch::DeviceType device = torch::kCPU;
+
+    torch::DeviceType device = (torch::cuda::is_available())?torch::kCUDA : torch::kCPU;
 };
 
 // Se crea el objeto con los parametros
@@ -148,6 +149,14 @@ void save_results(std::string path, std::vector<std::vector<float>> values){
 int main(){
     // Cronometro
     auto start_time = std::chrono::high_resolution_clock::now();
+
+    // Verificación de CUDA
+    if(torch::cuda::is_available()){
+        std::cout << "CUDA detectado, usando GPU" << std::endl;
+    }else{
+        std::cout << "Usando CPU" << std::endl;
+    }
+    
     // Carga del dataset de entrenamiento
     // La función map toma todos los tensores y los transforma en un unico tensor
     auto train_set = TData(options.input_dims).map(torch::data::transforms::Stack<>());
