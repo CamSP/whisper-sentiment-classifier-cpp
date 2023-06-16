@@ -2,6 +2,7 @@ NN/libtorch
 NN/tools/stopwords.cpp
 NN/data/tweets_processed.csv
 NN/data/tweets.csv
+NN/data/movie.csv
 NN/build
 NN/models
 NN/graphs
