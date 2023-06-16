@@ -9,6 +9,10 @@ rm train_results.csv
 rm test_results.csv
 cd ..
 
+cd data
+rm Corpus.txt
+cd ..
+
 mkdir build
 cd build
 cmake -DCMAKE_PREFIX_PATH=$path ..

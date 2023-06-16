@@ -9,16 +9,19 @@ using namespace torch;
 
 // Parametros generales
 struct Options {
-    int input_dims = 20;
-    int vocab_size = 100000;
-    int embedding_dim = 400;
+    // data
+    int input_dims = 100;
 
-    int hidden_size = 64;
+    // Embedding y LSTM
+    int vocab_size = 114940;
+    int embedding_dim = 64;
     int layers = 2;
+    int hidden_size = 128;
 
+    // Batch
     int train_batch_size = 64;
-    int test_batch_size = 32;
-    int epochs = 50;
+    int test_batch_size = 64;
+    int epochs = 1000;
     float learning_rate = 0.001;
 
     torch::DeviceType device = (torch::cuda::is_available())?torch::kCUDA : torch::kCPU;
@@ -42,8 +45,6 @@ std::vector<float> train(
     torch::optim::Optimizer& optimizer,
     size_t epoch,
     size_t data_size) {
-    // Index es el número de batch actual
-    size_t index = 0;
     // Se establece que la red neuronal va a ser entrenada
     network->train();
 
@@ -55,14 +56,12 @@ std::vector<float> train(
         // Se toman los datos
         auto data = batch.data.to(options.device);
         // Se toman los objetivos y se convierten en un tensor del tamaño del batch 
-        auto targets = batch.target.to(options.device).view({options.train_batch_size, 1}).to(torch::kFloat);
+        auto targets = batch.target.view({options.train_batch_size, 1}).to(torch::kFloat).to(options.device);
         // Se evaluan los datos en la red neuronal
         auto output = network->forward(data);
         // Se evalua la perdida entre los datos predichos y los reales
         // (Cross Entropy es la función de perdida utilizada normalmente para salidas multiclase)
         auto loss = bce_loss(output, targets);
-        // Se revisa que no hayan errores en el calculo de la perdida
-        assert(!std::isnan(loss.template item<float>()));
         // Dado que Sigmoid retorna un valor entre 0 y 1, se aproxima al entero más cercano
         // Se compara con los valores reales
         auto acc = torch::round(output).eq(targets).sum();
@@ -94,11 +93,8 @@ template <typename DataLoader>
 // data_size = Tamaño de los datos
 
 std::vector<float> test(Net& network, DataLoader& loader, size_t data_size) {
-    // Index es el número de batch actual
-    size_t index = 0;
     // Se establece que la red neuronal va a ser probada (Se congelan sus parametros)
     network -> eval();
-    torch::NoGradGuard no_grad;
 
     // Inicialización de la perdida y la presición
     float Loss = 0, Acc = 0;
@@ -108,16 +104,14 @@ std::vector<float> test(Net& network, DataLoader& loader, size_t data_size) {
         // Se toman los datos
         auto data = batch.data.to(options.device);
         // Se toman los objetivos y se convierten en un tensor del tamaño del batch 
-        auto targets = batch.target.to(options.device).view({options.test_batch_size, 1}).to(torch::kFloat);
+        auto targets = batch.target.view({options.test_batch_size, 1}).to(torch::kFloat).to(options.device);
         // Se evaluan los datos en la red neuronal
         auto output = network->forward(data);
-        // Se calcula la cout
+        // Se calcula la loss
         auto loss = bce_loss(output, targets);
-        // Se revisa que no hayan errores en el calculo de la perdida
-        assert(!std::isnan(loss.template item<float>()));
         // Se calcula la presición
-        auto acc = torch::round(output).eq(targets).sum();
-
+        auto acc = torch::round(output);
+        acc = acc.eq(targets).sum();
         // Se añaden los datos de loss y acc a los valores historicos
         Loss += loss.template item<float>();
         Acc += acc.template item<float>();
@@ -196,7 +190,7 @@ int main(){
     // Se crea el optimizador (Adam)
     // Recibe como parametro el learning rate
     torch::optim::Adam optimizer(
-        network->parameters(), torch::optim::AdamOptions(options.learning_rate)
+        network->parameters(), torch::optim::AdamOptions(options.learning_rate).weight_decay(0.001)
     );
 
     std::vector<std::vector<float>> resume_train;

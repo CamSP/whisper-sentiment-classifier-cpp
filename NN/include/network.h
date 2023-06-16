@@ -3,6 +3,8 @@
 #include <torch/torch.h>
 #include <iostream>
 
+using torch::indexing::Slice;
+
 // Arquitectura de la red neuronal
 struct NetImpl : torch::nn::Module{
   // lstm -> Capa LSTM unidireccional
@@ -15,8 +17,8 @@ struct NetImpl : torch::nn::Module{
   // layers = Número de capas de la LSTM
   public:
   NetImpl(size_t vocab_size, size_t embedding_dim, int hidden_size, size_t layers)
-    : lstm(torch::nn::LSTMOptions(embedding_dim, hidden_size).num_layers(layers).dropout(0.5).batch_first(true)),
-     densa1(hidden_size, 1),
+    : lstm(torch::nn::LSTMOptions(embedding_dim, hidden_size).num_layers(layers).batch_first(true).bidirectional(true).dropout(0.5)),
+     densa1(hidden_size*2, 1),
      out(),
      embedding(torch::nn::EmbeddingOptions(vocab_size, embedding_dim)){
 
@@ -33,11 +35,15 @@ struct NetImpl : torch::nn::Module{
     // Al embedding le entra un tensor X
     x = embedding(x);
     // La salida del embedding entra a la LSTM
-    auto output = std::get<0>(lstm->forward(x)).index({torch::indexing::Slice(), -1});
+    auto lstm1 = std::get<0>(lstm(x));
+    auto out_directions = lstm1.chunk(2, 2);
+    auto out_1 = out_directions[0].index({Slice(), -1}); 
+    auto out_2 = out_directions[1].index({Slice(), 0});
+    auto out_cat = torch::cat({out_1, out_2}, 1);
     // La salida de la LSTM entra a la capa densa1
-    output = torch::gelu(densa1(output));
+    auto densa = densa1(out_cat);
     // La salida de la capa densa entra a la neurona con activación sigmoide
-    output = out(output);
+    auto output = out(densa);
     // La salida es un numero entre 0 y 1
     return output;
   }

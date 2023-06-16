@@ -18,10 +18,10 @@ class TData : public torch::data::datasets::Dataset<TData> {
         TData::vocab_size = vocab_size;
         if(isTestingData){
             content_dataset = testing_set();
-            processed_dataset = preprocessDataset();
+            processed_dataset = preprocessDataset(false);
         }else{
             content_dataset = training_set();
-            processed_dataset = preprocessDataset(false);
+            processed_dataset = preprocessDataset();
         }
         
     };

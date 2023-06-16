@@ -24,6 +24,7 @@ int main(){
     Tokenizer tokenizer;
     Net network(options.vocab_size, options.embedding_dim, options.hidden_size, options.layers);
     torch::load(network, "../models/model.pt");
+    network -> eval();
 
     std::string line;
     ifstream file("../whisperOutput/output.txt");

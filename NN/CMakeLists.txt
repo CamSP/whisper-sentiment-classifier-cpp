@@ -13,11 +13,11 @@ target_link_libraries(main ${TORCH_LIBRARIES})
 
 set_property(TARGET main PROPERTY CXX_STANDARD 17)
 
-add_executable(process src/process.cpp
-                    include/network.h
-                    )
+# add_executable(process src/process.cpp
+#                     include/network.h
+#                     )
 
-target_include_directories(process PRIVATE include)
-target_link_libraries(process ${TORCH_LIBRARIES})
+# target_include_directories(process PRIVATE include)
+# target_link_libraries(process ${TORCH_LIBRARIES})
 
-set_property(TARGET process PROPERTY CXX_STANDARD 17)
+# set_property(TARGET process PROPERTY CXX_STANDARD 17)
