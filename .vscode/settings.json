@@ -66,5 +66,7 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp"
-    }
+    },
+    "ros.distro": "noetic",
+    
 }
